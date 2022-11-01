@@ -25,8 +25,14 @@
       <div class="card-header text-muted">
         <h5 class="mt-n3 h2"><b>Edit</b></h5>
         <form id="edit" class="pb-3" method="POST" action="/urls/<%=id%>/edit">
-          <label for="newURL">New URL:</label>
-          <input type="text" id="newURL" name="longURL" placeholder="http://www." required>
+          <label for="longURL">New URL:</label>
+          <!-- Input text box with longURL that we edit -->
+          <input 
+          type="text" 
+          id="longURL" 
+          name="longURL" 
+          placeholder="http://www." required>
+
           <button type="submit" class="btn btn-primary">Submit</button>  
         </form>
     </div>
