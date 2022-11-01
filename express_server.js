@@ -92,6 +92,13 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_login", templateVars);
+});
+
 app.get("/urls/new", (req, res) => {
   const templateVars = { 
     user: users[req.cookies["user_id"]] 
@@ -129,7 +136,7 @@ app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
-  res.render("urls_show", templateVars);
+  res.redirect(`/urls/${shortURL}`);
 });
 
 app.post("/login", (req, res) => {
@@ -141,6 +148,29 @@ app.post("/logout", (req, res) => {
   res.clearCookie("username");
   res.redirect("/urls");
 })
+
+app.post("/register", (req, res) => {
+  const id = generateRandomString();
+  const email = req.body.email;
+  const password = req.body.password;
+
+  if (email === "" || password === "") {
+    return res.status(400).send('400 code error: Email and/or Password field(s) are empty. Go <a href="/register">back</a>.');
+  }
+  // If the user email already exist
+  const user = getUserByEmail(email);
+  if (user) {
+    return res.status(400).send(`400 code error: ${email} already exists. Go <a href="/register">back</a>.`);
+  }
+
+  users[id] = {
+    id,
+    email,
+    password,
+  };
+  res.cookie("user_id", id);
+  res.redirect("/urls");
+});
 
 app.post("/urls/:id/edit", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
