@@ -17,7 +17,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 //////////////////////////////////////////////////////////////////////
-/// DATABASE 
+/// DATABASE
 //////////////////////////////////////////////////////////////////////
 
 const urlDatabase = {
@@ -40,11 +40,11 @@ const users = {
 };
 
 //////////////////////////////////////////////////////////////////////
-/// Functions 
+/// Functions
 //////////////////////////////////////////////////////////////////////
 
 //for random string for short URL
-function generateRandomString() {
+const  generateRandomString = function() {
   const randoms = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
   const ranlength = 6;
   let ranString = "";
@@ -55,7 +55,7 @@ function generateRandomString() {
     ranString += randoms[ranNumber];
   }
   return ranString;
-}
+};
 
 //Will search the email if it already exist, Return null if found
 const getUserByEmail = function(email) {
@@ -85,9 +85,13 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  const templateVars = { 
-    urls: urlDatabase, 
-    user: users[req.cookies["user_id"]] 
+
+  if (!req.cookies.user_id) {  // if the user is not login, give 401 error
+    return res.status(401).render('urls_no-access', { user: undefined });
+  }
+  const templateVars = {
+    urls: urlDatabase,
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_index", templateVars);
 });
@@ -100,23 +104,26 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { 
-    user: users[req.cookies["user_id"]] 
+  if (!req.cookies.user_id) {  // if the user is not login, redirect back to login page
+    return res.status(401).render('urls_no-access', { user: undefined });
+  }
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_new", templateVars);
 });
 
 app.get("/u/:id", (req, res) => {
-  const shortURL = req.params.id;
-  const longURL = urlDatabase[shortURL];
+  const shortURL = req.params.id; // retrieve the shortURL
+  const longURL = urlDatabase[shortURL]; // sends user to the webpage
   res.redirect(longURL);
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { 
-    id: req.params.id, 
-    longURL: urlDatabase[req.params.id], 
-    user: users[req.cookies["user_id"]] 
+  const templateVars = {
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id],
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
 });
@@ -133,6 +140,11 @@ app.get("/register",(req, res) => {
 //////////////////////////////////////////////////////////////////////
 
 app.post("/urls", (req, res) => {
+
+  if (!req.cookies.user_id) {
+    return res.status(403).send('Only users logged in can create shortened URLs. Please go \n<button onclick="history.back()">Back</button>');
+  }
+  
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
   urlDatabase[shortURL] = longURL;
@@ -144,14 +156,15 @@ app.post("/login", (req, res) => {
   const password = req.body.password;
   const user = getUserByEmail(email);
 
+  //error handles for both password and email that dont match
   if (!user) {
-    return res.status(403).send(`403 code error: ${email} does not exist. Go <a href="/login">back</a>.`);
+    return res.status(403).send(`403 code error: ${email} does not exist. Please go \n<button onclick="history.back()">Back</button>`);
   }
 
   if (user.password !== password) {
-    return res.status(403).send('403 code error: Incorrect password. Go <a href="/login">back</a>.');
+    return res.status(403).send('403 code error: Incorrect password. Please go \n<button onclick="history.back()">Back</button>');
   }
-  // set cookie for logged in user
+  // set cookie for the user that is logged in
   res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
@@ -159,7 +172,7 @@ app.post("/login", (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/login");
-})
+});
 
 app.post("/register", (req, res) => {
   const id = generateRandomString();
@@ -167,12 +180,12 @@ app.post("/register", (req, res) => {
   const password = req.body.password;
 
   if (email === "" || password === "") {
-    return res.status(400).send('400 code error: Email and/or Password field(s) are empty. Go <a href="/register">back</a>.');
+    return res.status(400).send('400 code error: Email and/or Password field(s) are empty. Please go \n<button onclick="history.back()">Back</button>');
   }
   // If the user email already exist
   const user = getUserByEmail(email);
   if (user) {
-    return res.status(400).send(`400 code error: ${email} already exists. Go <a href="/register">back</a>.`);
+    return res.status(400).send(`400 code error: ${email} already exists. Please go \n<button onclick="history.back()">Back</button>`);
   }
 
   users[id] = {
