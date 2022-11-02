@@ -87,7 +87,7 @@ app.get("/urls.json", (req, res) => {
 app.get("/urls", (req, res) => {
   const templateVars = { 
     urls: urlDatabase, 
-    username: users[req.cookies["user_id"]] 
+    user: users[req.cookies["user_id"]] 
   };
   res.render("urls_index", templateVars);
 });
@@ -140,13 +140,25 @@ app.post("/urls", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('username', req.body.username);
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email);
+
+  if (!user) {
+    return res.status(403).send(`403 code error: ${email} does not exist. Go <a href="/login">back</a>.`);
+  }
+
+  if (user.password !== password) {
+    return res.status(403).send('403 code error: Incorrect password. Go <a href="/login">back</a>.');
+  }
+  // set cookie for logged in user
+  res.cookie('user_id', user.id);
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
-  res.redirect("/urls");
+  res.clearCookie("user_id");
+  res.redirect("/login");
 })
 
 app.post("/register", (req, res) => {

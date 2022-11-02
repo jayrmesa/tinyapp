@@ -20,16 +20,20 @@
     </div>
     <div class="d-flex justify-content-end">
       <div class="navbar-nav">
-      <% if (!user) { %>
+      <% if (!user) { %> <!-- if the user is not logged-in -->
         <div class="d-flex">
-          <a class="nav-item nav-link" href="/login">Login</a>
-          <a class="nav-item nav-link" href="/register">Register</a>
+          <form class="form-inline">
+          <a class="nav-item nav-link active" href="/login">Login</a>
+        </form>
+        <form class="form-inline">
+          <a class="nav-item nav-link active" href="/register">Register</a>
+        </form>
+        </div>
       <% } else { %>
         <form class="form-inline" method="POST" action="/logout">
-          <p class="m-auto font-weight-bold">
-            Logged In As: <%= user.email %> User!
-          </p>
-          <button class="btn btn-outline-dark ml-3">Logout</button>
+          <a class="nav-item nav-link font-weight-normal" href="/urls">
+            Logged In As: <%= user.email %> </a> 
+            <button class="btn btn-danger ml-3">Logout</button>
         </form>
       <% } %>
     </div>
