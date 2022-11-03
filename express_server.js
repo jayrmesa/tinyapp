@@ -96,10 +96,13 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_login", templateVars);
+  const user = users[req.cookies.user_id];
+
+  if (user) { //if the user is already login return to urls page
+    res.redirect("/urls");
+    return;
+  }
+  res.render("urls_login", {user});
 });
 
 app.get("/urls/new", (req, res) => {
