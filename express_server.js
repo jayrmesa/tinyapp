@@ -1,4 +1,5 @@
 const express = require("express");
+const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 
 //////////////////////////////////////////////////////////////////////
@@ -12,6 +13,8 @@ const PORT = 8080; // default port 8080
 /// MIDDLEWARE
 //////////////////////////////////////////////////////////////////////
 
+// make it readable for errors, and Get/Post in terminal
+app.use(morgan('dev')); 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -66,7 +69,6 @@ const getUserByEmail = function(email) {
   return null;
 };
 
-
 //////////////////////////////////////////////////////////////////////
 /// Routes - GET
 //////////////////////////////////////////////////////////////////////
@@ -106,7 +108,7 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id) {  // if the user is not login, redirect back to login page
+  if (!req.cookies.user_id) {  // if the user is not login, render no access page, redirects to register or login
     return res.status(401).render('urls_no-access', { user: undefined });
   }
   const templateVars = {
@@ -118,6 +120,10 @@ app.get("/urls/new", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // retrieve the shortURL
   const longURL = urlDatabase[shortURL]; // sends user to the webpage
+
+  if (!longURL) {  // Short url does not exist in the database
+    return res.status(404).render('urls_no-shortUrl', { user: undefined } );
+  }
   res.redirect(longURL);
 });
 
