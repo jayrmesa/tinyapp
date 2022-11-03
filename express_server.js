@@ -26,11 +26,11 @@ app.use(cookieParser());
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
+    userID: "userRandomID",
   },
   i3BoGr: {
     longURL: "https://www.google.ca",
-    userID: "aJ48lW",
+    userID: "user2RandomID",
   },
 
 };
@@ -76,6 +76,17 @@ const getUserByEmail = function(email) {
   return null;
 };
 
+// Returns urlDatabe for each user id matching
+const urlsForUser = function(id) {
+  const userUrls = {};
+  for (const shortURL in urlDatabase) {
+    if (urlDatabase[shortURL].userID === id) {
+      userUrls[shortURL] = urlDatabase[shortURL].longURL;
+    }
+  }
+  return userUrls;
+};
+
 //////////////////////////////////////////////////////////////////////
 /// Routes - GET
 //////////////////////////////////////////////////////////////////////
@@ -98,8 +109,8 @@ app.get("/urls", (req, res) => {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
   const templateVars = {
-    urls: urlDatabase,
-    user: users[req.cookies["user_id"]]
+    urls: urlsForUser(req.cookies.user_id),
+    user: users[req.cookies.user_id]
   };
   res.render("urls_index", templateVars);
 });
@@ -135,10 +146,23 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+
+  if (!req.cookies.user_id) {  // if the user is not login, give 401 error
+    return res.status(401).render('urls_no-access', { user: undefined });
+  }
+
+  if (!urlDatabase[req.params.id]) {
+    return res.status(404).send('404 error: URL requested not found. Please go \n<button onclick="history.back()">Back</button>');
+  }
+
+  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+    return res.status(401).send(`401 error: Unable to access ${req.params.id} because its not yours. Please kindly get your own \n<button onclick="history.back()">Sorry</button>`);
+  }
+
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.cookies["user_id"]]
+    user: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
 });
@@ -164,8 +188,10 @@ app.post("/urls", (req, res) => {
   }
   
   const shortURL = generateRandomString();
-  const longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL }
+  urlDatabase[shortURL] = { 
+    longURL: req.body.longURL, 
+    userID: req.cookies.user_id, 
+  }
   res.redirect(`/urls/${shortURL}`);
 });
 
