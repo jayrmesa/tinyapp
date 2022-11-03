@@ -50,7 +50,6 @@ const  generateRandomString = function() {
   let ranString = "";
 
   for (let i = 0; i < ranlength; i++) {
-    
     const ranNumber = Math.floor(Math.random() * randoms.length);
     ranString += randoms[ranNumber];
   }
@@ -129,10 +128,13 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/register",(req, res) => {
-  const templateVars = {
-    user: users[req.cookies["user_id"]]
-  };
-  res.render("urls_register", templateVars);
+  const user = users[req.cookies.user_id];
+
+  if (user) { //if the user is already registered return to urls page
+    res.redirect("/urls");
+    return;
+  }
+  res.render("urls_register", {user});
 });
 
 //////////////////////////////////////////////////////////////////////
