@@ -24,8 +24,15 @@ app.use(cookieParser());
 //////////////////////////////////////////////////////////////////////
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+
 };
 
 // example users according to compass
@@ -119,7 +126,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // retrieve the shortURL
-  const longURL = urlDatabase[shortURL]; // sends user to the webpage
+  const longURL = urlDatabase[shortURL].longURL; // sends user to the webpage
 
   if (!longURL) {  // Short url does not exist in the database
     return res.status(404).render('urls_no-shortUrl', { user: undefined } );
@@ -130,7 +137,7 @@ app.get("/u/:id", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
     user: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
@@ -158,7 +165,7 @@ app.post("/urls", (req, res) => {
   
   const shortURL = generateRandomString();
   const longURL = req.body.longURL;
-  urlDatabase[shortURL] = longURL;
+  urlDatabase[shortURL] = { longURL }
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -209,7 +216,7 @@ app.post("/register", (req, res) => {
 });
 
 app.post("/urls/:id/edit", (req, res) => {
-  urlDatabase[req.params.id] = req.body.longURL;
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect('/urls');
 });
 
