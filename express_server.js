@@ -217,20 +217,6 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:id/delete", (req, res) => {
- 
-  if (!req.session.user_id) {
-    return res.status(403).send('403 error: Only Registered Users can delete shortened URLs.Please go \n<button onclick="history.back()">Back</button>');
-  }
-
-  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
-    return res.status(401).send(`401 error: You Cannot DELETE ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
-  }
-
-  delete urlDatabase[req.params.id];
-  res.redirect('/urls');
-});
-
 //////////////////////////////////////////////////////////////////////
 /// Routes - PUT
 //////////////////////////////////////////////////////////////////////
@@ -249,7 +235,23 @@ app.put("/urls/:id", (req, res) => {
   res.redirect('/urls');
 });
 
+//////////////////////////////////////////////////////////////////////
+/// Routes - DELETE
+//////////////////////////////////////////////////////////////////////
 
+app.delete("/urls/:id", (req, res) => {
+ 
+  if (!req.session.user_id) {
+    return res.status(403).send('403 error: Only Registered Users can delete shortened URLs.Please go \n<button onclick="history.back()">Back</button>');
+  }
+
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
+    return res.status(401).send(`401 error: You Cannot DELETE ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
+  }
+
+  delete urlDatabase[req.params.id];
+  res.redirect('/urls');
+});
 
 //////////////////////////////////////////////////////////////////////
 /// LISTENER
