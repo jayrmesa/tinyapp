@@ -1,5 +1,6 @@
 const express = require("express");
 const morgan = require('morgan');
+const bcrypt = require("bcryptjs");
 const cookieParser = require('cookie-parser');
 
 //////////////////////////////////////////////////////////////////////
@@ -67,10 +68,10 @@ const  generateRandomString = function() {
 };
 
 //Will search the email if it already exist, Return null if found
-const getUserByEmail = function(email) {
-  for (const id of Object.keys(users)) {
-    if (users[id]['email'] === email) {
-      return users[id];
+const getUserByEmail = function(email, database) {
+  for (const id of Object.keys(database)) {
+    if (database[id]['email'] === email) {
+      return database[id];
     }
   }
   return null;
@@ -198,14 +199,14 @@ app.post("/urls", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
 
   //error handles for both password and email that dont match
   if (!user) {
     return res.status(403).send(`403 code error: ${email} does not exist. Please go \n<button onclick="history.back()">Back</button>`);
   }
 
-  if (user.password !== password) {
+  if (bcrypt.compareSync(user.password, password)) {
     return res.status(403).send('403 code error: Incorrect password. Please go \n<button onclick="history.back()">Back</button>');
   }
   // set cookie for the user that is logged in
@@ -222,12 +223,13 @@ app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
+  const hashedPassword = bcrypt.hashSync(password, 10);
 
   if (email === "" || password === "") {
     return res.status(400).send('400 code error: Email and/or Password field(s) are empty. Please go \n<button onclick="history.back()">Back</button>');
   }
   // If the user email already exist
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (user) {
     return res.status(400).send(`400 code error: ${email} already exists. Please go \n<button onclick="history.back()">Back</button>`);
   }
@@ -235,7 +237,7 @@ app.post("/register", (req, res) => {
   users[id] = {
     id,
     email,
-    password,
+    password: hashedPassword,
   };
   res.cookie("user_id", id);
   res.redirect("/urls");
@@ -264,7 +266,7 @@ app.post("/urls/:id/delete", (req, res) => {
   if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
     return res.status(401).send(`401 error: You Cannot DELETE ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
   }
-  
+
   delete urlDatabase[req.params.id];
   res.redirect('/urls');
 });
