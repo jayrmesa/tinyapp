@@ -1,5 +1,5 @@
 const assert = require('chai').assert;
-const { getUserByEmail } = require('../helpers.js');
+const { getUserByEmail, urlsForUser } = require('../helpers.js');
 
 const testUsers = {
   "userRandomID": {
@@ -14,6 +14,7 @@ const testUsers = {
   }
 };
 
+// terste cases for user emails
 describe('getUserByEmail', function() {
   it('should return a user with valid email', function() {
     const user = getUserByEmail("user@example.com", testUsers)
@@ -28,10 +29,58 @@ describe('getUserByEmail', function() {
   });
 
   it('should return null if email is invalid', function() {
-    const user = getUserByEmail("user3@example.com", testUsers);
+    const user = getUserByEmail("@example.com", testUsers);
     const expectedUserID = null;
     assert.equal(user, expectedUserID);
   });
+
+  const testshortID = {
+    b6UTxQ: {
+      longURL: "https://www.tsn.ca",
+      userID: "userRandomID",
+    },
+    i3BoGr: {
+      longURL: "https://www.google.ca",
+      userID: "user2RandomID",
+    },
+  
+  };
+
+  describe('urlsForUser', function() {
+
+    it('should return b6UTxQ for user userRandomID', function() {
+      const urlObject = urlsForUser("userRandomID", testshortID);
+      const expectedObject = {
+        b6UTxQ: {
+          longURL: "https://www.tsn.ca",
+          userID: "userRandomID",
+        }
+      };
+      assert.deepEqual(urlObject, expectedObject);
+    });
+
+    it('should return i3BoGr for user user2RandomID', function() {
+      const urlObject = urlsForUser("user2RandomID", testshortID);
+      const expectedObject = {
+        i3BoGr: {
+          longURL: "https://www.google.ca",
+          userID: "user2RandomID",
+        }
+      };
+      assert.deepEqual(urlObject, expectedObject);
+    });
+  
+    it('should return empty for a non existant users', function() {
+      const urlObject = urlsForUser("@example.com", testshortID);
+      const expectedResult = {};
+      assert.deepEqual(urlObject, expectedResult);
+    });
+  
+  });
+
+
+
+
 
  
 });
