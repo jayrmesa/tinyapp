@@ -80,7 +80,7 @@ app.get("/urls", (req, res) => {
     return res.status(401).render('urls_no-access', { user: undefined });
   }
   const templateVars = {
-    urls: urlsForUser(req.session.user_id),
+    urls: urlsForUser(req.session.user_id, urlDatabase),
     user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
