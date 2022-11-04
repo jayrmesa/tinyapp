@@ -28,6 +28,10 @@ To run tinyApp application, you will need to have NPM installed and its required
 - [Express](https://www.npmjs.com/package/express)
 - [EJS](https://www.npmjs.com/package/ejs)
 - [cookie-parser](https://www.npmjs.com/package/cookie-parser)
+- [bcrypt](https://www.npmjs.com/package/bcryptjs)
+- [cookie-session](https://www.npmjs.com/package/cookie-session)
+- [morgan](https://www.npmjs.com/package/morgan)
+- [method-override](https://www.npmjs.com/package/method-override)
 
 ### **Installation**
 
@@ -72,6 +76,8 @@ The following files have been developed for the web site:
 
 * `urls_no-access.ejs`: Front end pane to handle unregister users
 
+* `urls_no-shortUrl.ejs`: Front end pane to handle unregister users modifying shortUrls
+
 * `urls_login.ejs`: Front end pane to show the users to Enter email and password to login.
 
 * `urls_new.ejs`:  Front end pane to allow users to create a new short URL for any long URL.
@@ -83,3 +89,9 @@ The following files have been developed for the web site:
 ### Views/partials
 
 * `_header.ejs`: Front end pane that contains the navigation links to the site. 
+
+## Test
+This project is tested and design for _M & C_ ,  `Mocha and Chai` unit testing
+
+- [Chai](https://www.npmjs.com/package/chai)
+- [Mocha](https://www.npmjs.com/package/mocha)

@@ -1,6 +1,7 @@
 const express = require("express");
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
+const methodOverride = require('method-override');
 const cookieSession = require('cookie-session');
 const {
   getUserByEmail,
@@ -23,6 +24,7 @@ app.set("view engine", "ejs");
 // make it readable for errors, and Get/Post in terminal
 app.use(morgan('dev')); 
 app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 app.use(cookieSession({
   session: 'session',
   keys: ['key1', 'key2']
@@ -215,20 +217,6 @@ app.post("/register", (req, res) => {
   res.redirect("/urls");
 });
 
-app.post("/urls/:id/edit", (req, res) => {
-
-  if (!req.session.user_id) {
-    return res.status(403).send('403 error: Only Registered Users can edit shortened URLs.Please go \n<button onclick="history.back()">Back</button>');
-  }
-
-  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
-    return res.status(401).send(`401 error: You Cannot EDIT ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
-  }
-
-  urlDatabase[req.params.id].longURL = req.body.longURL;
-  res.redirect('/urls');
-});
-
 app.post("/urls/:id/delete", (req, res) => {
  
   if (!req.session.user_id) {
@@ -242,6 +230,25 @@ app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect('/urls');
 });
+
+//////////////////////////////////////////////////////////////////////
+/// Routes - PUT
+//////////////////////////////////////////////////////////////////////
+
+app.put("/urls/:id", (req, res) => {
+
+  if (!req.session.user_id) {
+    return res.status(403).send('403 error: Only Registered Users can edit shortened URLs.Please go \n<button onclick="history.back()">Back</button>');
+  }
+
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
+    return res.status(401).send(`401 error: You Cannot EDIT ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
+  }
+
+  urlDatabase[req.params.id].longURL = req.body.longURL;
+  res.redirect('/urls');
+});
+
 
 
 //////////////////////////////////////////////////////////////////////
