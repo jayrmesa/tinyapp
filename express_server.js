@@ -1,7 +1,7 @@
 const express = require("express");
 const morgan = require('morgan');
 const bcrypt = require("bcryptjs");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 
 //////////////////////////////////////////////////////////////////////
 /// Configuration/SETUP
@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 const PORT = 8080; // default port 8080
+app.set("view engine", "ejs");
 
 //////////////////////////////////////////////////////////////////////
 /// MIDDLEWARE
@@ -16,9 +17,11 @@ const PORT = 8080; // default port 8080
 
 // make it readable for errors, and Get/Post in terminal
 app.use(morgan('dev')); 
-app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  session: 'session',
+  keys: ['key1', 'key2']
+}));
 
 //////////////////////////////////////////////////////////////////////
 /// DATABASE
@@ -106,18 +109,18 @@ app.get("/urls.json", (req, res) => {
 
 app.get("/urls", (req, res) => {
 
-  if (!req.cookies.user_id) {  // if the user is not login, give 401 error
+  if (!req.session.user_id) {  // if the user is not login, give 401 error
     return res.status(401).render('urls_no-access', { user: undefined });
   }
   const templateVars = {
-    urls: urlsForUser(req.cookies.user_id),
-    user: users[req.cookies.user_id]
+    urls: urlsForUser(req.session.user_id),
+    user: users[req.session.user_id]
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
 
   if (user) { //if the user is already login return to urls page
     res.redirect("/urls");
@@ -127,11 +130,12 @@ app.get("/login", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies.user_id) {  // if the user is not login, render no access page, redirects to register or login
+  if (!req.session.user_id) {  
+    // if the user is not login, render no access page, redirects to register or login
     return res.status(401).render('urls_no-access', { user: undefined });
   }
   const templateVars = {
-    user: users[req.cookies["user_id"]]
+    user: users[req.session.user_id]
   };
   res.render("urls_new", templateVars);
 });
@@ -148,7 +152,7 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
 
-  if (!req.cookies.user_id) {  // if the user is not login, give 401 error
+  if (!req.session.user_id) {  // if the user is not login, give 401 error
     return res.status(401).render('urls_no-access', { user: undefined });
   }
 
@@ -156,20 +160,20 @@ app.get("/urls/:id", (req, res) => {
     return res.status(404).send('404 error: URL requested not found. Please go \n<button onclick="history.back()">Back</button>');
   }
 
-  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send(`401 error: Unable to access ${req.params.id} because its not yours. Please kindly get your own \n<button onclick="history.back()">Sorry</button>`);
   }
 
   const templateVars = {
     id: req.params.id,
     longURL: urlDatabase[req.params.id].longURL,
-    user: users[req.cookies.user_id]
+    user: users[req.session.user_id]
   };
   res.render("urls_show", templateVars);
 });
 
 app.get("/register",(req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
 
   if (user) { //if the user is already registered return to urls page
     res.redirect("/urls");
@@ -184,14 +188,14 @@ app.get("/register",(req, res) => {
 
 app.post("/urls", (req, res) => {
 
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(403).send('Only users logged in can create shortened URLs. Please go \n<button onclick="history.back()">Back</button>');
   }
   
   const shortURL = generateRandomString();
   urlDatabase[shortURL] = { 
     longURL: req.body.longURL, 
-    userID: req.cookies.user_id, 
+    userID: req.session.user_id, 
   }
   res.redirect(`/urls/${shortURL}`);
 });
@@ -210,12 +214,12 @@ app.post("/login", (req, res) => {
     return res.status(403).send('403 code error: Incorrect password. Please go \n<button onclick="history.back()">Back</button>');
   }
   // set cookie for the user that is logged in
-  res.cookie('user_id', user.id);
+  req.session.user_id = user.id;
   res.redirect("/urls");
 });
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -239,17 +243,18 @@ app.post("/register", (req, res) => {
     email,
     password: hashedPassword,
   };
-  res.cookie("user_id", id);
+
+  req.session.user_id = id;
   res.redirect("/urls");
 });
 
 app.post("/urls/:id/edit", (req, res) => {
 
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(403).send('403 error: Only Registered Users can edit shortened URLs.Please go \n<button onclick="history.back()">Back</button>');
   }
 
-  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send(`401 error: You Cannot EDIT ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
   }
 
@@ -259,11 +264,11 @@ app.post("/urls/:id/edit", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
  
-  if (!req.cookies.user_id) {
+  if (!req.session.user_id) {
     return res.status(403).send('403 error: Only Registered Users can delete shortened URLs.Please go \n<button onclick="history.back()">Back</button>');
   }
 
-  if (urlDatabase[req.params.id].userID !== req.cookies.user_id) {
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) {
     return res.status(401).send(`401 error: You Cannot DELETE ${req.params.id} because it doesnt belong to you. Please kindly go back \n<button onclick="history.back()">Sorry</button>`);
   }
 
