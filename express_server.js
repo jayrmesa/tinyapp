@@ -65,11 +65,12 @@ const users = {
 //////////////////////////////////////////////////////////////////////
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
-});
 
-app.get("/hello", (req, res) => {
-  res.send("<html><body></b>Hello World</b></body></html>\n");
+  if (req.session.user_id) {
+    return res.redirect("/urls");
+  }
+
+  res.redirect("/login");
 });
 
 app.get("/urls.json", (req, res) => {
@@ -77,7 +78,6 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-
   if (!req.session.user_id) {  // if the user is not login, give 401 error
     return res.status(401).render('urls_no-access', { user: undefined });
   }
@@ -89,18 +89,18 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const user = users[req.session.user_id];
-
-  if (user) { //if the user is already login return to urls page
-    res.redirect("/urls");
-    return;
+  if (req.session.user_id) {
+    return res.redirect("/urls");
   }
-  res.render("urls_login", {user});
+
+  const templateVars = { 
+    user: users[req.session.user_id] 
+  };
+  res.render("urls_login", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.user_id) {  
-    // if the user is not login, render no access page, redirects to register or login
+  if (!req.session.user_id) { // if the user is not login, render no access page
     return res.status(401).render('urls_no-access', { user: undefined });
   }
   const templateVars = {
@@ -111,11 +111,12 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const shortURL = req.params.id; // retrieve the shortURL
-  const longURL = urlDatabase[shortURL].longURL; // sends user to the webpage
 
-  if (!longURL) {  // Short url does not exist in the database
+  if (!urlDatabase[shortURL]) {  // Short url does not exist in the database
     return res.status(404).render('urls_no-shortUrl', { user: undefined } );
   }
+
+  const longURL = urlDatabase[shortURL].longURL // sends user to the webpage
   res.redirect(longURL);
 });
 
@@ -142,13 +143,16 @@ app.get("/urls/:id", (req, res) => {
 });
 
 app.get("/register",(req, res) => {
-  const user = users[req.session.user_id];
 
-  if (user) { //if the user is already registered return to urls page
-    res.redirect("/urls");
-    return;
+  if (req.session.user_id) {
+    return res.redirect("/urls");
   }
-  res.render("urls_register", {user});
+
+  const templateVars = { 
+    user: users[req.session.user_id] 
+  };
+
+  res.render("urls_register", templateVars);
 });
 
 //////////////////////////////////////////////////////////////////////
